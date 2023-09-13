@@ -3,7 +3,7 @@ import test from "./test"
 
 function run(){
   const client = net.createConnection({ host: "127.0.0.1", port: 8080 }, () => {
-      console.log("connected to server")
+      // console.log("connected to server")
       test(client) 
       setInterval(()=>{
         test(client) 
