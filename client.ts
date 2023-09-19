@@ -1,8 +1,8 @@
-import net from "node:net"
+import {createConnection} from "net"
 import test from "./test"
 
 function run(){
-  const client = net.createConnection({ host: "127.0.0.1", port: 2000 }, () => {
+  const client = createConnection({ host: "127.0.0.1", port: 2000 }, () => {
       // console.log("connected to server")
       test(client) 
       setInterval(()=>{
