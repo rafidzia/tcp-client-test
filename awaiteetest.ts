@@ -13,9 +13,6 @@ export class AsyncEventEmitter extends EventEmitter {
         (...args: any[]) => void,
         (...args: any[]) => void
     >();
-
-    private eventMap = new Map<string | symbol, ((...args: any[]) => void)[]>();
-
     /**
      * Similar to `emitter.emit(eventName, ...args)`, but returns a promise that resolves when all listeners are done.
      */
