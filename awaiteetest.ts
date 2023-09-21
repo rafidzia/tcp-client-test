@@ -143,10 +143,10 @@ ee.on("asd", async (data: string) => {
         setTimeout(()=>{
             console.log(data)
             resolve()
-        }, 1000)
+        }, 500)
     })
 })
 setInterval(async ()=>{    
     await ee.emitAsync("asd", "first?")
     console.log("second?")
-}, 2000)
+}, 1000)
