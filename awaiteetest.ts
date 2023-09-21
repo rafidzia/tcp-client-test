@@ -1,6 +1,8 @@
 import EventEmitter from 'events';
 
 export const EventResolverSymbol = Symbol.for('EventResolver');
+
+// bound onceWrapper listener name when using once
 const boundOnceWrapper = "bound onceWrapper"
 
 /**
@@ -91,7 +93,6 @@ export class AsyncEventEmitter extends EventEmitter {
                     return resolver(listener, typeof val == "boolean" ? val : true);
                 }
             }
-            // remove listeners after the event is done
             this.removeListener(eventName, listener);
             return await listener(...args);
         };
@@ -112,38 +113,58 @@ export class AsyncEventEmitter extends EventEmitter {
 
     off = this.removeListener;
 
-    removeAllListeners(eventName?: string | symbol | undefined): this {
-        if (!eventName) {
+    removeAllListeners(event?: string | symbol | undefined): this {
+        if (!event) {
             this.listenerMap = new WeakMap<
                 (...args: any[]) => void,
                 (...args: any[]) => void
             >();
-        }else{
-            super.listeners(eventName).forEach(listener => {
-                this.listenerMap.delete(listener as (...args: any[]) => void)
-            })
         }
-        return eventName ? super.removeAllListeners(eventName) : super.removeAllListeners();
+        return event ? super.removeAllListeners(event) : super.removeAllListeners();
     }
 }
 
 export type AsyncEventEmitterInterface = AsyncEventEmitter
 
-const ee = new AsyncEventEmitter()
 
-ee.on("asd", ()=>{
-    console.log("eee")
-})
 
-ee.on("asd", async (data: string) => {
-    return new Promise((resolve) => {
-        setTimeout(()=>{
-            console.log(data)
-            resolve()
-        }, 500)
+
+function setEE(ee: AsyncEventEmitterInterface) {
+    ee.on("asd", () => {
+        console.log("---------------------")
     })
-})
-setInterval(async ()=>{    
+
+    ee.on("asd", async (data: string) => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                console.log(data)
+                resolve()
+            }, 3000)
+        })
+    })
+}
+
+let count = 0
+
+
+async function demo(){
+
+    let ee = new AsyncEventEmitter()
+
+    setEE(ee)
+
     await ee.emitAsync("asd", "first?")
     console.log("second?")
-}, 1000)
+    await ee.emitAsync("asd", "third?")
+    console.log("fourth?")
+
+    ee.removeAllListeners()
+
+    //@ts-ignore
+    ee = null
+
+    count++
+    console.log(count)
+}
+demo()
+setInterval(demo , 10000)
