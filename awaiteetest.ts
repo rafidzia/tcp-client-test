@@ -1,6 +1,7 @@
-import EventEmitter from 'events';
+import { EventEmitter } from 'events';
+import util from 'util';
 
-export const EventResolverSymbol = Symbol.for('EventResolver');
+const EventResolverSymbol = Symbol.for('EventResolver');
 
 // bound onceWrapper listener name when using once
 const boundOnceWrapper = "bound onceWrapper"
@@ -16,47 +17,89 @@ export class AsyncEventEmitter extends EventEmitter {
         (...args: any[]) => void
     >();
     /**
-     * Similar to `emitter.emit(eventName, ...args)`, but returns a promise that resolves when all listeners are done.
+     * @inheritdoc
+     * For additional purpose, any boolean return value from listener will be evaluated and override the emit return value.
+     * If a single listener return false, the return value will be false.
+     */
+    emit(eventName: string | symbol, ...args: any[]): boolean {
+        let result = true
+        let response = super.emit(eventName, ...args, (r: boolean | Promise<boolean>) => {
+            if (util.types.isPromise(r)) {
+                result = util.inspect(r).slice(10, 15) !== "false" 
+            } else {
+                result = r !== false 
+            }
+        });
+        return result && response
+    }
+    /**
+     *  Similar to `emitter.emit(eventName, ...args)`, but return a promise that resolve when all listeners are done.
+     * 
+     * For additional purpose, any boolean return value from listener will be evaluated and override the emit return value.
+     * If a single listener return false, the return value will be false.
      */
     emitAsync(eventName: string | symbol, ...args: any[]): Promise<boolean> {
         return new Promise((resolve) => {
             let listenerCount = super.listenerCount(eventName)
             if (listenerCount == 0) return resolve(false)
             let count = 0;
-            let responseList: boolean[] = []
+            let responseStatus = true
             const resolveCounting = (listener: Function, val: boolean) => {
                 if (listener.name == boundOnceWrapper) return
                 count++;
-                responseList.push(val)
-                if (count >= listenerCount) resolve(responseList.indexOf(false) >= 0)
+                responseStatus = val !== false 
+                if (count >= listenerCount) resolve(responseStatus)
             }
             super.emit(eventName, ...args, EventResolverSymbol, resolveCounting);
         });
     }
-
+    /**
+     * @inheritdoc
+     * For additional purpose, the listener can return boolean value to response the emit/emitAsync
+     */
     on(eventName: string | symbol, listener: (...args: any[]) => void): this {
         const wrappedListener = this.#generateWrappedListener(eventName, listener)
         this.listenerMap.set(listener, wrappedListener);
+        this.listenerMap.set(wrappedListener, listener);
         return super.on(eventName, wrappedListener);
     }
 
+    /**
+     * @inheritdoc
+     * For additional purpose, the listener can return boolean value to response the emit/emitAsync
+     */
     addListener = this.on;
 
+    /**
+     * @inheritdoc
+     * For additional purpose, the listener can return boolean value to response the emit/emitAsync
+     */
     once(eventName: string | symbol, listener: (...args: any[]) => void): this {
         const wrappedListener = this.#generateOnceWrapperListener(eventName, listener)
         this.listenerMap.set(listener, wrappedListener);
+        this.listenerMap.set(wrappedListener, listener);
         return super.once(eventName, wrappedListener);
     }
 
+    /**
+     * @inheritdoc
+     * For additional purpose, the listener can return boolean value to response the emit/emitAsync
+     */
     prependListener(eventName: string | symbol, listener: (...args: any[]) => void): this {
         const wrappedListener = this.#generateWrappedListener(eventName, listener)
         this.listenerMap.set(listener, wrappedListener);
+        this.listenerMap.set(wrappedListener, listener);
         return super.prependListener(eventName, wrappedListener);
     }
 
+    /**
+     * @inheritdoc
+     * For additional purpose, the listener can return boolean value to response the emit/emitAsync
+     */
     prependOnceListener(eventName: string | symbol, listener: (...args: any[]) => void): this {
         const wrappedListener = this.#generateOnceWrapperListener(eventName, listener)
         this.listenerMap.set(listener, wrappedListener);
+        this.listenerMap.set(wrappedListener, listener);
         return super.prependOnceListener(eventName, wrappedListener);
     }
 
@@ -70,11 +113,11 @@ export class AsyncEventEmitter extends EventEmitter {
                     key === EventResolverSymbol
                 ) {
                     args.splice(args.length - 2, 2)
-                    let val = await listener(...args);
-                    return resolver(listener, typeof val == "boolean" ? val : true);
+                    return resolver(listener, await listener(...args));
                 }
             }
-            return await listener(...args);
+            const cb = args.pop();
+            cb(listener(...args));
         };
     }
 
@@ -88,13 +131,13 @@ export class AsyncEventEmitter extends EventEmitter {
                     key === EventResolverSymbol
                 ) {
                     args.splice(args.length - 2, 2)
-                    let val = await listener(...args);
                     this.removeListener(eventName, listener);
-                    return resolver(listener, typeof val == "boolean" ? val : true);
+                    return resolver(listener, await listener(...args));
                 }
             }
             this.removeListener(eventName, listener);
-            return await listener(...args);
+            const cb = args.pop();
+            cb(listener(...args));
         };
     }
 
@@ -104,23 +147,31 @@ export class AsyncEventEmitter extends EventEmitter {
     ): this {
         let wrappedListener = this.listenerMap.get(listener);
         if (wrappedListener) {
-            this.listenerMap.delete(listener);
-            return super.removeListener(eventName, wrappedListener);
-        } else {
-            return super.removeListener(eventName, listener);
+            this.listenerMap.delete(wrappedListener);
+            super.removeListener(eventName, wrappedListener);
         }
+        this.listenerMap.delete(listener);
+        return super.removeListener(eventName, listener);
     }
 
     off = this.removeListener;
 
-    removeAllListeners(event?: string | symbol | undefined): this {
-        if (!event) {
+    removeAllListeners(eventName?: string | symbol | undefined): this {
+        if (!eventName) {
             this.listenerMap = new WeakMap<
                 (...args: any[]) => void,
                 (...args: any[]) => void
             >();
+        }else{
+            this.listeners(eventName).forEach(listener => {
+                let OriginalListener = this.listenerMap.get(listener as ()=>void);
+                if (OriginalListener) {
+                    this.listenerMap.delete(OriginalListener);
+                }
+                this.listenerMap.delete(listener as ()=>void);
+            })
         }
-        return event ? super.removeAllListeners(event) : super.removeAllListeners();
+        return eventName ? super.removeAllListeners(eventName) : super.removeAllListeners();
     }
 }
 
@@ -132,6 +183,7 @@ export type AsyncEventEmitterInterface = AsyncEventEmitter
 function setEE(ee: AsyncEventEmitterInterface) {
     ee.on("asd", () => {
         console.log("---------------------")
+        return true
     })
 
     ee.on("asd", async (data: string) => {
@@ -141,15 +193,14 @@ function setEE(ee: AsyncEventEmitterInterface) {
                 resolve()
             }, 3000)
         })
+        // return true
     })
 }
 
+const ee = new AsyncEventEmitter()
 let count = 0
 
-
-async function demo(){
-
-    let ee = new AsyncEventEmitter()
+async function demo() {
 
     setEE(ee)
 
@@ -158,10 +209,10 @@ async function demo(){
     await ee.emitAsync("asd", "third?")
     console.log("fourth?")
 
-    ee.removeAllListeners()
+    ee.removeAllListeners('asd')
 
     //@ts-ignore
-    ee = null
+    // ee = null
 
     count++
     console.log(count)
