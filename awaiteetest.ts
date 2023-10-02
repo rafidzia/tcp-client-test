@@ -141,6 +141,10 @@ export class AsyncEventEmitter extends EventEmitter {
         };
     }
 
+    listeners(eventName: string | symbol): Function[] {
+        return super.listeners(eventName).map(listener => this.listenerMap.get(listener as ()=>void) as Function)
+    }
+
     removeListener(
         eventName: string | symbol,
         listener: (...args: any[]) => void,
@@ -163,7 +167,7 @@ export class AsyncEventEmitter extends EventEmitter {
                 (...args: any[]) => void
             >();
         }else{
-            this.listeners(eventName).forEach(listener => {
+            super.listeners(eventName).forEach(listener => {
                 let OriginalListener = this.listenerMap.get(listener as ()=>void);
                 if (OriginalListener) {
                     this.listenerMap.delete(OriginalListener);
@@ -177,45 +181,81 @@ export class AsyncEventEmitter extends EventEmitter {
 
 export type AsyncEventEmitterInterface = AsyncEventEmitter
 
-
-
-
-function setEE(ee: AsyncEventEmitterInterface) {
-    ee.on("asd", () => {
-        console.log("---------------------")
-        return true
-    })
-
-    ee.on("asd", async (data: string) => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                console.log(data)
-                resolve()
-            }, 3000)
-        })
-        // return true
-    })
-}
-
 const ee = new AsyncEventEmitter()
-let count = 0
 
-async function demo() {
 
-    setEE(ee)
+ee.setMaxListeners(20000)
 
-    await ee.emitAsync("asd", "first?")
-    console.log("second?")
-    await ee.emitAsync("asd", "third?")
-    console.log("fourth?")
+let data = {test: 1}
 
-    ee.removeAllListeners('asd')
 
-    //@ts-ignore
-    // ee = null
+// for(let i = 0; i < 100; i++){
+//     ee.on("test", (res: {test: number}) => {
+//         let x = res
+//         console.log(x)
+//     })
+// }
 
-    count++
-    console.log(count)
+// ee.emit("test", data)
+
+
+// setTimeout(()=>{
+//     data.test = 2
+//     // ee.emit("test", data
+// }, 20000)
+
+
+
+function x (){
+    return new Promise((resolve) => {
+        resolve(false)
+    
+        setTimeout(() => {
+            resolve(true)
+        }, 2000)
+    })
 }
-demo()
-setInterval(demo , 10000)
+
+(async ()=>{
+    console.log(await x())
+})()
+
+// function setEE(ee: AsyncEventEmitterInterface) {
+//     ee.on("asd", () => {
+//         console.log("---------------------")
+//         return true
+//     })
+
+//     ee.on("asd", async (data: string) => {
+//         return new Promise((resolve) => {
+//             setTimeout(() => {
+//                 console.log(data)
+//                 resolve()
+//             }, 3000)
+//         })
+//         // return true
+//     })
+// }
+
+
+// let count = 0
+
+// async function demo() {
+
+//     setEE(ee)
+
+//     await ee.emitAsync("asd", "first?")
+//     console.log("second?")
+//     await ee.emitAsync("asd", "third?")
+//     console.log("fourth?")
+
+//     ee.removeAllListeners('asd')
+
+//     //@ts-ignore
+//     // ee = null
+
+//     count++
+//     console.log(count)
+// }
+// demo()
+// setInterval(demo , 10000)
