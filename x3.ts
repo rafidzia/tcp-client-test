@@ -1,28 +1,43 @@
-// import { createConnection } from "net"
-
-
-// function run() {
-//     let client = createConnection({ host: "127.0.0.1", port: 2000 }, () => {
-//         client.write(Buffer.from("78781101035151009438275420082bc10044f49c0d0a", "hex"))
-//     })
-
-//     client.on('data', (data) => {
-//       console.log(data.toString("hex"));
-//     });
-
-
-// }
-
-// run()
-
-
-
-let x: number | undefined = undefined
-
-
-
-function O(y: number) {
-
+interface P {
+    gender: string
+    femboying: () => void
 }
-x = 1
-O(x)
+
+interface Person {
+    name: string,
+    age: number
+    gender: string
+    femboying: () => void
+}
+
+// const Person = function(this: any){
+
+// } as any as {new(): Person};
+
+class Person implements P{
+    
+}
+
+export {Person}
+// creating objects
+const person1 = new Person();
+const person2 = new Person();
+
+Person.prototype.name = 'Peter';
+// adding property to constructor function
+Person.prototype.gender = 'male';
+Person.prototype.femboying = function () {
+    this.gender = "female"
+}
+
+// prototype value of Person
+console.log(Person.prototype);
+
+// inheriting the property from prototype
+console.log(person1.gender);
+console.log(person2.gender);
+
+person1.femboying()
+
+console.log(person1.gender)
+console.log(person2.gender);

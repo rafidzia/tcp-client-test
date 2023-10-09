@@ -6,14 +6,20 @@ function test(client: Socket) {
 
 let recycledImei: number[] = []
 
-let imei: number
+
 
 let countClient = 0
 
 function run() {
     let testInterval: NodeJS.Timeout | null
+    let imei: number
     if(recycledImei.length > 0){
-        imei = recycledImei.pop()!
+        let tmpimei = recycledImei.pop()
+        if(tmpimei){
+            imei = tmpimei
+        }else{
+            imei = Math.floor(100000000000000 + Math.random() * 900000000000000)
+        }
     }else{
         imei = Math.floor(100000000000000 + Math.random() * 900000000000000)
     }
@@ -39,14 +45,14 @@ function run() {
     setTimeout(() => {
         clearInterval(testInterval!)
         client.destroy()
-        recycledImei.push(imei)
+        recycledImei.unshift(imei)
         countClient--
         setTimeout(() => {
             // @ts-ignore
             client = null
             testInterval = null
         }, 1000)
-    }, 6000000)
+    }, 1200000)
 }
 
 setInterval(() => {
@@ -55,4 +61,4 @@ setInterval(() => {
 
 setInterval(() => {
     run()
-}, 500)
+}, 100)
