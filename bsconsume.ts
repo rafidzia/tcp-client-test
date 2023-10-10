@@ -6,7 +6,7 @@ const client = new Beanlstakd("127.0.0.1", 11300)
 
 if (cluster.isPrimary) {
 
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 4; i++) {
         cluster.fork()
     }
     cluster.on("fork", (worker) => {
