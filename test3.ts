@@ -34,10 +34,11 @@ function run() {
     })
 
     client.on('data', (data) => {
+        console.log(data.toString("hex"))
         if (data.toString("hex") == "7878050110014c4d0d0a") {
             client.write(Buffer.from("78780a1346060400020bef60b70d0a", "hex"))
         }
-        if (["787813800b0000000056455253494f4e00021011da780d0a", "787812800c0000000056455253494f4e231011e1b50d0a"].includes(data.toString("hex"))) {
+        if (data.toString("hex") == "787812800c0000000056455253494f4e231011e1b50d0a787813800b0000000056455253494f4e00021011da780d0a") {
             client.write(Buffer.from("797900332100000000015b56455253494f4e5d4e5433375f47543831305f574141445f56332e315f3232303930372e313631380bed993e0d0a", "hex"))
         }
     });
@@ -55,10 +56,12 @@ function run() {
     }, 1200000)
 }
 
-setInterval(() => {
-    console.log("client count: ", countClient)
-}, 10000)
+run()
 
-setInterval(() => {
-    run()
-}, 100)
+// setInterval(() => {
+//     console.log("client count: ", countClient)
+// }, 10000)
+
+// setInterval(() => {
+//     run()
+// }, 100)
