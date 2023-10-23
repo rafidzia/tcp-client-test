@@ -1,11 +1,12 @@
-import net from "node:net"
+import {createConnection} from "net"
 import test from "./test"
 
 function run(){
-  const client = net.createConnection({ host: "127.0.0.1", port: 8080 }, () => {
+  let testInterval: NodeJS.Timeout | null
+  let client = createConnection({ host: "127.0.0.1", port: 2000 }, () => {
       // console.log("connected to server")
       test(client) 
-      setInterval(()=>{
+      testInterval = setInterval(()=>{
         test(client) 
       }, 5000)
   })
@@ -23,7 +24,13 @@ function run(){
   // })
 
   setTimeout(()=>{
-    client.end()
+    clearInterval(testInterval!)
+    client.destroy()
+    setTimeout(()=>{
+      // @ts-ignore
+      client = null
+      testInterval = null
+    }, 1000)
   }, 600000)
 }
 
