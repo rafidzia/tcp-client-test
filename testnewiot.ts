@@ -23,7 +23,12 @@ function run() {
     }else{
         imei = Math.floor(100000000000000 + Math.random() * 900000000000000)
     }
-    let client = createConnection({ host: "127.0.0.1", port: 2000 }, () => {
+    let client = createConnection({ 
+        // host: "20.198.161.15", 
+        host: "localhost",
+        port: 1200,
+        // port: 2000,
+    }, () => {
         countClient++
         // console.log("connected to server")
         client.write(Buffer.from("787811010" + imei.toString() + "20082bc10bec39760d0a", "hex"))
@@ -31,6 +36,7 @@ function run() {
             test(client)
         }, 10000)
 
+        
     })
 
     client.on('data', (data) => {
@@ -41,6 +47,14 @@ function run() {
             client.write(Buffer.from("797900332100000000015b56455253494f4e5d4e5433375f47543831305f574141445f56332e315f3232303930372e313631380bed993e0d0a", "hex"))
         }
     });
+
+    client.on("error", (err)=>{
+        console.log(err)
+    })
+    
+    client.on("close", ()=>{
+        console.log("close")
+    })
 
     setTimeout(() => {
         clearInterval(testInterval!)

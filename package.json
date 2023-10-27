@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/rafidzia/tcp-client-test#readme",
   "dependencies": {
+    "@types/node": "^20.8.7",
     "beanstalkd": "^2.2.5",
     "jackd": "^2.2.2",
     "nodestalker": "^0.1.22"
