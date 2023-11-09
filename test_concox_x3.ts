@@ -12,24 +12,24 @@ let countClient = 0
 
 function run() {
     let testInterval: NodeJS.Timeout | null
-    let imei: number = 353701095393621
-    // if(recycledImei.length > 0){
-    //     let tmpimei = recycledImei.pop()
-    //     if(tmpimei){
-    //         imei = tmpimei
-    //     }else{
-    //         imei = Math.floor(100000000000000 + Math.random() * 900000000000000)
-    //     }
-    // }else{
-    //     imei = Math.floor(100000000000000 + Math.random() * 900000000000000)
-    // }
+    let imei: number
+    if(recycledImei.length > 0){
+        let tmpimei = recycledImei.pop()
+        if(tmpimei){
+            imei = tmpimei
+        }else{
+            imei = Math.floor(100000000000000 + Math.random() * 900000000000000)
+        }
+    }else{
+        imei = Math.floor(100000000000000 + Math.random() * 900000000000000)
+    }
     let client = createConnection({ 
         // host: "20.198.161.15", 
         host: "localhost",
         // port: 1200,
         port: 2000,
     }, () => {
-        // countClient++
+        countClient++
         // console.log("connected to server")
         client.write(Buffer.from("787811010" + imei.toString() + "20082bc10bec39760d0a", "hex"))
         testInterval = setInterval(() => {
@@ -43,9 +43,9 @@ function run() {
         if (data.toString("hex") == "7878050110014c4d0d0a") {
             client.write(Buffer.from("78780a1346060400020bef60b70d0a", "hex"))
         }
-        console.log(data.toString("hex"))
+        // console.log(data.toString("hex"))
         if (data.toString("hex").indexOf("787812800c0000000056455253494f4e231011e1b50d0a") > -1) {
-            console.log("asd")
+            // console.log("asd")
             client.write(Buffer.from("797900332100000000015b56455253494f4e5d4e5433375f47543831305f574141445f56332e315f3232303930372e313631380bed993e0d0a", "hex"))
         }
     });
@@ -58,26 +58,26 @@ function run() {
         console.log("close")
     })
 
-    // setTimeout(() => {
-    //     clearInterval(testInterval!)
-    //     client.destroy()
-    //     recycledImei.unshift(imei)
-    //     countClient--
-    //     setTimeout(() => {
-    //         // @ts-ignore
-    //         client = null
-    //         testInterval = null
-    //     }, 1000)
-    // }, 1200000)
+    setTimeout(() => {
+        clearInterval(testInterval!)
+        client.destroy()
+        recycledImei.unshift(imei)
+        countClient--
+        setTimeout(() => {
+            // @ts-ignore
+            client = null
+            testInterval = null
+        }, 1000)
+    }, 1200000)
 }
 
-// setInterval(() => {
-//     console.log("client count: ", countClient)
-// }, 10000)
+setInterval(() => {
+    console.log("client count: ", countClient)
+}, 10000)
 
-// setInterval(() => {
+setInterval(() => {
     run()
-// }, 100)
+}, 100)
 
 
 // 000f333537303733323935343038373332
