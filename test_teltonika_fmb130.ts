@@ -31,8 +31,11 @@ function run() {
     }else{
         imei = Math.floor(100000000000000 + Math.random() * 900000000000000)
     }
+
+    let sendAllowed = false
+
     let client = createConnection({ 
-        // host: "20.198.161.15", 
+        // host: "20.198.161.15",
         host: "localhost",
         // port: 1200,
         port: 2000,
@@ -41,7 +44,7 @@ function run() {
         // console.log("connected to server")
         client.write(Buffer.from("000f3" + imei.toString().split("").join("3") + "3038373332", "hex"))
         testInterval = setInterval(() => {
-            test(client)
+            if(sendAllowed) test(client)
         }, 10000)
 
         
@@ -50,6 +53,7 @@ function run() {
     client.on('data', (data) => {
         if(data.toString("hex") == "000000000000000e0c010500000006676574766572010000a4c2"){
             client.write(Buffer.from("000000000000009f0c0106000000975665723a30332e32372e30375f3030204750533a41584e5f352e312e392048773a464d42313330204d6f643a343320494d45493a33353730373332393534303837333220496e69743a323032332d31312d3120363a353820557074696d653a3130323431204d41433a303031453432374143454344205350433a312830292041584c3a32204f42443a3020424c3a312e31302042543a34010000621a", "hex"))
+            sendAllowed = true
         }
     });
 
