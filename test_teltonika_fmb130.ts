@@ -42,7 +42,7 @@ function run() {
         client.write(Buffer.from("000f3" + imei.toString().split("").join("3") + "3038373332", "hex"))
         testInterval = setInterval(() => {
             test(client)
-        }, 5000)
+        }, 10000)
 
         
     })
