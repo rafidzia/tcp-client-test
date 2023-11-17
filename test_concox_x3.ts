@@ -28,7 +28,7 @@ function run() {
 
     let client = createConnection({ 
         // host: "20.198.161.15", 
-        host: "localhost",
+        host: "127.0.0.1",
         // port: 1200,
         port: 2000,
     }, () => {
@@ -72,7 +72,7 @@ function run() {
             client = null
             testInterval = null
         }, 1000)
-    }, 1200000)
+    }, 600000)
 }
 
 setInterval(() => {
